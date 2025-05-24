@@ -1,0 +1,23 @@
+[project]
+name = "fx_moves_pred"
+version = "0.1.0"
+description = "fx_moves_pred using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "crewai[tools]>=0.121.0,<1.0.0"
+]
+
+[project.scripts]
+fx_moves_pred = "fx_moves_pred.main:run"
+run_crew = "fx_moves_pred.main:run"
+train = "fx_moves_pred.main:train"
+replay = "fx_moves_pred.main:replay"
+test = "fx_moves_pred.main:test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"
