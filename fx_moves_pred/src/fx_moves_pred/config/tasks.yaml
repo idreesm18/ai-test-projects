@@ -1,17 +1,68 @@
-research_task:
+research_fi_task:
   description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is {current_year}.
+    Conduct thorough research about fixed income markets
+    over a recent period starting from {current_time}.
+    Make sure you find any interesting and relevant moves that are most
+    recent
   expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
+    A breakdown with bullets and descriptions when appropriate detailing
+    general recent trends in a few select interesting country's markets 
+    that have a lot of movement or are primed to see movement.
+  agent: fixed_income_specalist
 
-reporting_task:
+research_cc_task:
   description: >
-    Review the context you got and expand each topic into a full section for a report.
+    Conduct thorough research about corporate credit markets
+    over a recent period starting from {current_time}.
+    Make sure you find any interesting and relevant moves that are most
+    recent
+  expected_output: >
+    A breakdown with bullets and descriptions when appropriate detailing
+    general recent trends in a few select interesting country's markets 
+    that have a lot of movement or are primed to see movement.
+  agent: corporate_credit_specialist
+
+research_fx_task:
+  description: >
+    Conduct thorough research about fx markets
+    over a recent period starting from {current_time}.
+    Make sure you find any interesting and relevant moves that are most
+    recent
+  expected_output: >
+    A breakdown with bullets and descriptions when appropriate detailing
+    general recent trends in a few select interesting country's markets 
+    that have a lot of movement or are primed to see movement.
+  agent: fx_strategist
+
+analyze_related_markets_task:
+  description: >
+    Based on all the background information given from other markets and fx markets,
+    pick three promising potential fx trades that you believe will move in a favorable
+    direction and create a report on them, detailing why you believe these positions are
+    favorable, what evidence you used from the background information, and any potential
+    shortfalls or assumptions.
     Make sure the report is detailed and contains any and all relevant information.
   expected_output: >
-    A fully fledged report with the main topics, each with a full section of information.
-    Formatted as markdown without '```'
-  agent: reporting_analyst
+    A breakdown with bullets broken down into three sections, one for each potential
+    trade.
+  agent: fx_strategist
+
+verify_macro_logic:
+  description: >
+    Review the suggestions given and make sure the economics make sense. If something
+    looks off, report it and either ask for more explanation or a correction.
+  expected_output: >
+    A brief writeup in bullets about findings, potential issues, or suggestions for
+    improvement.
+  agent: global_economist
+  
+final_review:
+  description: >
+    Conduct a final overview of all three strategies, specifically looking for potential
+    oversights or issues that might be missed. Employ a higher level of market knowledge to
+    potentially catch incorrect assumptions or mistakes.
+  expected_output: >
+    A final writeup with the three suggested fx trades, each explaining the full process of
+    what the trade will be, how it will be profitable, what evidence was used to come to this
+    conclusion, and what potential issues there may be with this trade.
+  agent: portfolio_manager

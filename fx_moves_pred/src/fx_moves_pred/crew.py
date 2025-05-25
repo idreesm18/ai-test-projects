@@ -20,16 +20,37 @@ class FxMovesPred():
     # If you would like to add tools to your agents, you can learn more about it here:
     # https://docs.crewai.com/concepts/agents#agent-tools
     @agent
-    def researcher(self) -> Agent:
+    def fixed_income_specalist(self) -> Agent:
         return Agent(
-            config=self.agents_config['researcher'], # type: ignore[index]
+            config=self.agents_config['fixed_income_specalist'], # type: ignore[index]
             verbose=True
         )
 
     @agent
-    def reporting_analyst(self) -> Agent:
+    def corporate_credit_specialist(self) -> Agent:
         return Agent(
-            config=self.agents_config['reporting_analyst'], # type: ignore[index]
+            config=self.agents_config['corporate_credit_specialist'], # type: ignore[index]
+            verbose=True
+        )
+    
+    @agent
+    def fx_strategist(self) -> Agent:
+        return Agent(
+            config=self.agents_config['fx_strategist'], # type: ignore[index]
+            verbose=True
+        )
+    
+    @agent
+    def global_economist(self) -> Agent:
+        return Agent(
+            config=self.agents_config['global_economist'], # type: ignore[index]
+            verbose=True
+        )
+    
+    @agent
+    def portfolio_manager(self) -> Agent:
+        return Agent(
+            config=self.agents_config['portfolio_manager'], # type: ignore[index]
             verbose=True
         )
 
@@ -37,15 +58,40 @@ class FxMovesPred():
     # task dependencies, and task callbacks, check out the documentation:
     # https://docs.crewai.com/concepts/tasks#overview-of-a-task
     @task
-    def research_task(self) -> Task:
+    def research_fi_task(self) -> Task:
         return Task(
-            config=self.tasks_config['research_task'], # type: ignore[index]
+            config=self.tasks_config['research_fi_task'], # type: ignore[index]
+        )
+    
+    @task
+    def research_cc_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['research_cc_task'], # type: ignore[index]
+        )
+    
+    @task
+    def research_fx_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['research_fx_task'], # type: ignore[index]
         )
 
     @task
-    def reporting_task(self) -> Task:
+    def analyze_related_markets_task(self) -> Task:
         return Task(
-            config=self.tasks_config['reporting_task'], # type: ignore[index]
+            config=self.tasks_config['analyze_related_markets_task'], # type: ignore[index]
+            
+        )
+    
+    @task
+    def verify_macro_logic(self) -> Task:
+        return Task(
+            config=self.tasks_config['verify_macro_logic'], # type: ignore[index]
+        )
+    
+    @task
+    def final_review(self) -> Task:
+        return Task(
+            config=self.tasks_config['final_review'], # type: ignore[index]
             output_file='report.md'
         )
 
