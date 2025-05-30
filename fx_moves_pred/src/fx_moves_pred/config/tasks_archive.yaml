@@ -1,0 +1,248 @@
+# research_fi_task:
+#   description: >
+#     USE YOUR SEARCH TOOLS NOW. Search for "government bond yields {current_time}" and 
+#     "central bank policy {current_time}" and "fixed income markets {current_time}".
+    
+#     You must provide ACTUAL DATA from your searches, not plans or intentions.
+#     Find real yield numbers, actual policy changes, and specific market events.
+    
+#     You CANNOT complete your task and return a final answer unless you use the search
+#     tool to do research and use that information to inform your final answer.
+
+#     DO NOT return just the action and search query as your final answer. 
+#     DO NOT describe what you will do - DO IT and report the findings.
+#   expected_output: >
+#     ACTUAL search results and data including:
+#     - Specific yield numbers with dates and sources
+#     - Named central bank policy changes with details
+#     - Real market events with supporting URLs
+#     - NO PLANNING - ONLY RESULTS
+#   agent: fixed_income_specalist
+
+# research_cc_task:
+#   description: >
+#     USE YOUR SEARCH TOOLS NOW. Search for "corporate credit spreads {current_time}" and 
+#     "corporate bond markets {current_time}" and "credit ratings downgrades {current_time}".
+    
+#     You must provide ACTUAL DATA from your searches, not plans or intentions.
+#     Find real spread numbers, actual credit events, and specific company names.
+    
+#     DO NOT describe what you will do - DO IT and report the findings.
+#   expected_output: >
+#     ACTUAL search results and data including:
+#     - Specific credit spread numbers with sources
+#     - Named companies with rating changes
+#     - Real credit market events with supporting URLs
+#     - NO PLANNING - ONLY RESULTS
+#   agent: corporate_credit_specialist
+
+# research_fx_task:
+#   description: >
+#     USE YOUR SEARCH TOOLS NOW. Search for "currency exchange rates {current_time}" and 
+#     "FX markets {current_time}" and "central bank intervention {current_time}".
+    
+#     You must provide ACTUAL DATA from your searches, not plans or intentions.
+#     Find real exchange rates, actual FX events, and specific currency movements.
+    
+#     DO NOT describe what you will do - DO IT and report the findings.
+#   expected_output: >
+#     ACTUAL search results and data including:
+#     - Specific exchange rate numbers with dates
+#     - Named currency events with details
+#     - Real FX market developments with supporting URLs
+#     - NO PLANNING - ONLY RESULTS
+#   agent: fx_strategist
+
+# analyze_related_markets_task:
+#   description: >
+#     Based on the research from fixed income, corporate credit, and FX markets,
+#     identify three specific FX trading opportunities for the {trade_horizon} horizon
+#     starting from {current_time}.
+    
+#     For each trade recommendation, provide:
+#     1. The specific currency pair and direction (long/short)
+#     2. Entry levels and target levels
+#     3. Risk management (stop loss levels)
+#     4. The fundamental reasoning based on the market research
+#     5. Supporting evidence from the other market analyses
+#     6. Risk factors and potential trade failures
+#   expected_output: >
+#     Three detailed FX trade recommendations, each containing:
+#     - Currency pair and trade direction
+#     - Specific entry, target, and stop levels
+#     - Fundamental thesis with supporting evidence
+#     - Risk assessment and potential pitfalls
+#     - Timeline and catalysts for the trade
+#   agent: fx_strategist
+#   context:
+#     - research_fi_task
+#     - research_cc_task
+#     - research_fx_task
+
+# verify_macro_logic:
+#   description: >
+#     Review the three FX trade recommendations from a macroeconomic perspective.
+#     Evaluate whether the fundamental reasoning is sound based on economic theory
+#     and historical precedents. Identify any logical inconsistencies, missing
+#     risk factors, or alternative scenarios that could impact the trades.
+    
+#     Provide constructive feedback and suggest improvements where necessary.
+#   expected_output: >
+#     A critical analysis covering:
+#     - Economic validity of each trade thesis
+#     - Potential logical flaws or missing considerations  
+#     - Alternative scenarios that could impact outcomes
+#     - Suggestions for improving the trade rationale
+#     - Overall assessment of macroeconomic soundness
+#   agent: global_economist
+#   context:
+#     - analyze_related_markets_task
+  
+# final_review:
+#   description: >
+#     Conduct a comprehensive final review of all three FX trade recommendations,
+#     incorporating feedback from the macroeconomic analysis. Assess the overall
+#     portfolio construction, risk management, correlation between trades, and
+#     practical implementation considerations.
+    
+#     Provide the final polished trade recommendations with any necessary
+#     refinements based on the complete analysis.
+#   expected_output: >
+#     A final comprehensive report containing:
+#     - Three refined FX trade recommendations with complete details
+#     - Risk assessment and portfolio-level considerations
+#     - Implementation timeline and key monitoring points
+#     - Executive summary of the investment thesis
+#     - Disclaimer and risk warnings
+#   agent: portfolio_manager
+#   context:
+#     - analyze_related_markets_task
+#     - verify_macro_logic
+
+
+
+
+research_fi_task:
+  description: >
+    You are operating with a knowledge cutoff of {current_time}. Based on 
+    all information and data available by {current_time} and ignoring all
+    data beyond {current_time}.
+    Your task is to collect and summarize relevant data, news, and 
+    developments in global fixed income markets that occurred before 
+    this date. You must not include or reference any events, data, or 
+    analysis that became available after {current_time}. This is a research 
+    phase only — do not generate investment ideas or forecasts. The goal is 
+    to prepare an information base that a strategist on {current_time} would 
+    have access to for making decisions for the coming year.
+    Use external search tools to gather information in corporate credit
+    markets.
+    Believe it is {current_time} and you exist at that time period. If 
+    you are researching by searching the web, only access data before or
+    on {current_time}, and ignore any information beyond that time.
+    Make sure you find any interesting and relevant moves that are most
+    recent. Do not stop at describing what you intend to do — follow through.
+  expected_output: >
+    A breakdown with bullets and descriptions when appropriate detailing
+    general recent trends in a few select interesting country's markets 
+    that have a lot of movement or are primed to see movement.
+  agent: fixed_income_specalist
+
+research_cc_task:
+  description: >
+    You are operating with a knowledge cutoff of {current_time}. Based on 
+    all information and data available by {current_time} and ignoring all
+    data beyond {current_time}.
+    Your task is to collect and summarize relevant data, news, and 
+    developments in global corporate credit markets that occurred before 
+    this date. You must not include or reference any events, data, or 
+    analysis that became available after {current_time}. This is a research 
+    phase only — do not generate investment ideas or forecasts. The goal is 
+    to prepare an information base that a strategist on {current_time} would 
+    have access to for making decisions for the coming year.
+    Use external search tools to gather information in corporate credit
+    markets.
+    Believe it is {current_time} and you exist at that time period. If 
+    you are researching by searching the web, only access data before or
+    on {current_time}, and ignore any information beyond that time.
+    Make sure you find any interesting and relevant moves that are most
+    recent. Do not stop at describing what you intend to do — follow through.
+  expected_output: >
+    A breakdown with bullets and descriptions when appropriate detailing
+    general recent trends in a few select interesting country's markets 
+    that have a lot of movement or are primed to see movement.
+  agent: corporate_credit_specialist
+
+research_fx_task:
+  description: >
+    You are operating with a knowledge cutoff of {current_time}. Based on 
+    all information and data available by {current_time} and ignoring all
+    data beyond {current_time}.
+    Your task is to collect and summarize relevant data, news, and 
+    developments in global FX markets that occurred before 
+    this date. You must not include or reference any events, data, or 
+    analysis that became available after {current_time}. This is a research 
+    phase only — do not generate investment ideas or forecasts. The goal is 
+    to prepare an information base that a strategist on {current_time} would 
+    have access to for making decisions for the coming year.
+    Use external search tools to gather information in corporate credit
+    markets.
+    Believe it is {current_time} and you exist at that time period. If 
+    you are researching by searching the web, only access data before or
+    on {current_time}, and ignore any information beyond that time.
+    Make sure you find any interesting and relevant moves that are most
+    recent. Do not stop at describing what you intend to do — follow through.
+  expected_output: >
+    A breakdown with bullets and descriptions when appropriate detailing
+    general recent trends in a few select interesting country's markets 
+    that have a lot of movement or are primed to see movement.
+  agent: fx_strategist
+
+# analyze_related_markets_task:
+#   description: >
+#     Based on all the background information given from other markets and fx markets,
+#     pick three promising potential fx trades that you believe will move in a favorable
+#     direction beginning from {current_time} over the trade horizon of {trade_horizon} 
+#     and create a report on them, detailing why you believe these positions are favorable, 
+#     what evidence you used from the background information, and any potential shortfalls 
+#     or assumptions.
+#     Believe it is {current_time} and you exist at that time period. If 
+#     you are researching by searching the web, only access data before or
+#     on {current_time}, and ignore any information beyond that time.
+#     Make sure the report is detailed and contains any and all relevant information.
+#     Do not stop at describing what you intend to do — follow through.
+#   expected_output: >
+#     A breakdown with bullets broken down into three sections, one for each potential
+#     trade.
+#   agent: fx_strategist
+#   context:
+#     - research_fi_task
+#     - research_cc_task
+#     - research_fx_task
+
+# verify_macro_logic:
+#   description: >
+#     Review the suggestions given and make sure the economics make sense. If something
+#     looks off, report it and either ask for more explanation or a correction.
+#     Believe it is {current_time} and you exist at that time period. If 
+#     you are researching by searching the web, only access data before or
+#     on {current_time}, and ignore any information beyond that time.
+#     Do not stop at describing what you intend to do — follow through.
+#   expected_output: >
+#     A brief writeup in bullets about findings, potential issues, or suggestions for
+#     improvement.
+#   agent: global_economist
+  
+# final_review:
+#   description: >
+#     Conduct a final overview of all three strategies, specifically looking for potential
+#     oversights or issues that might be missed. Employ a higher level of market knowledge to
+#     potentially catch incorrect assumptions or mistakes.
+#     Believe it is {current_time} and you exist at that time period. If 
+#     you are researching by searching the web, only access data before or
+#     on {current_time}, and ignore any information beyond that time.
+#     Do not stop at describing what you intend to do — follow through.
+#   expected_output: >
+#     A final writeup with the three suggested fx trades, each explaining the full process of
+#     what the trade will be, how it will be profitable, what evidence was used to come to this
+#     conclusion, and what potential issues there may be with this trade.
+#   agent: portfolio_manager

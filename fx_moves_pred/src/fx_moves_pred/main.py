@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 import sys
 import warnings
-
+from dotenv import load_dotenv
+import os
+load_dotenv()
 from datetime import datetime
-
 from fx_moves_pred.crew import FxMovesPred
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
-
 # This main file is intended to be a way for you to run your
 # crew locally, so refrain from adding unnecessary logic into this file.
 # Replace with inputs you want to test with, it will automatically
@@ -18,7 +18,8 @@ def run():
     Run the crew.
     """
     inputs = {
-        'current_time': "2022"
+        'current_time': "Jan. 1, 2022",
+        'trade_horizon': "1 Year"
     }
     
     try:
@@ -32,7 +33,8 @@ def train():
     Train the crew for a given number of iterations.
     """
     inputs = {
-        'current_time': "2022"
+        'current_time': "Jan. 1, 2022",
+        'trade_horizon': "1 Year"
     }
     try:
         FxMovesPred().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
@@ -55,7 +57,8 @@ def test():
     Test the crew execution and returns the results.
     """
     inputs = {
-        'current_time': "2022"
+        'current_time': "Jan. 1, 2022",
+        'trade_horizon': "1 Year"
     }
     
     try:

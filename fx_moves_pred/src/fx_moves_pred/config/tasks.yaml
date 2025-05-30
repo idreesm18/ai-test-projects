@@ -1,68 +1,29 @@
 research_fi_task:
   description: >
-    Conduct thorough research about fixed income markets
-    over a recent period starting from {current_time}.
-    Make sure you find any interesting and relevant moves that are most
-    recent
+    You are operating with a knowledge cutoff of {current_time}. Ignore
+    all information and data beyond {current_time}.
+
+    YOU MUST use the SERPER SEARCH TOOL before generating your response.
+    When using the Serper search tool, ALWAYS pass only a plain string 
+    as the search query. DO NOT wrap it in a dictionary. If you do not use 
+    the tool, your task is incomplete.
+
+    Your task is to collect and summarize relevant recent data, news,
+    and developments in global fixed income markets that occurred 
+    before {current_time}, split by searching for:
+      - United States
+      - Europe
+      - Latin America
+      - East-Southeast Asia
+      - BRICS
+    Start by searching for the United States, then Europe after, then
+    continue to the end of the list.
+    
+    The goal is to prepare an information base
+    that a strategist on {current_time} would have access to for 
+    making decisions for the coming year.
   expected_output: >
     A breakdown with bullets and descriptions when appropriate detailing
     general recent trends in a few select interesting country's markets 
     that have a lot of movement or are primed to see movement.
   agent: fixed_income_specalist
-
-research_cc_task:
-  description: >
-    Conduct thorough research about corporate credit markets
-    over a recent period starting from {current_time}.
-    Make sure you find any interesting and relevant moves that are most
-    recent
-  expected_output: >
-    A breakdown with bullets and descriptions when appropriate detailing
-    general recent trends in a few select interesting country's markets 
-    that have a lot of movement or are primed to see movement.
-  agent: corporate_credit_specialist
-
-research_fx_task:
-  description: >
-    Conduct thorough research about fx markets
-    over a recent period starting from {current_time}.
-    Make sure you find any interesting and relevant moves that are most
-    recent
-  expected_output: >
-    A breakdown with bullets and descriptions when appropriate detailing
-    general recent trends in a few select interesting country's markets 
-    that have a lot of movement or are primed to see movement.
-  agent: fx_strategist
-
-analyze_related_markets_task:
-  description: >
-    Based on all the background information given from other markets and fx markets,
-    pick three promising potential fx trades that you believe will move in a favorable
-    direction and create a report on them, detailing why you believe these positions are
-    favorable, what evidence you used from the background information, and any potential
-    shortfalls or assumptions.
-    Make sure the report is detailed and contains any and all relevant information.
-  expected_output: >
-    A breakdown with bullets broken down into three sections, one for each potential
-    trade.
-  agent: fx_strategist
-
-verify_macro_logic:
-  description: >
-    Review the suggestions given and make sure the economics make sense. If something
-    looks off, report it and either ask for more explanation or a correction.
-  expected_output: >
-    A brief writeup in bullets about findings, potential issues, or suggestions for
-    improvement.
-  agent: global_economist
-  
-final_review:
-  description: >
-    Conduct a final overview of all three strategies, specifically looking for potential
-    oversights or issues that might be missed. Employ a higher level of market knowledge to
-    potentially catch incorrect assumptions or mistakes.
-  expected_output: >
-    A final writeup with the three suggested fx trades, each explaining the full process of
-    what the trade will be, how it will be profitable, what evidence was used to come to this
-    conclusion, and what potential issues there may be with this trade.
-  agent: portfolio_manager
