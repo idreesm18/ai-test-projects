@@ -1,29 +1,62 @@
 research_fi_task:
   description: >
-    You are operating with a knowledge cutoff of {current_time}. Ignore
-    all information and data beyond {current_time}.
+    You are analyzing recent developments in {country}'s fixed income market using the structured search result data below.
+    The current date is {current_time}, and your knowledge cutoff is {current_time}.
+    Ignore any events or data after this time.
 
-    YOU MUST use the SERPER SEARCH TOOL before generating your response.
-    When using the Serper search tool, ALWAYS pass only a plain string 
-    as the search query. DO NOT wrap it in a dictionary. If you do not use 
-    the tool, your task is incomplete.
-
-    Your task is to collect and summarize relevant recent data, news,
-    and developments in global fixed income markets that occurred 
-    before {current_time}, split by searching for:
-      - United States
-      - Europe
-      - Latin America
-      - East-Southeast Asia
-      - BRICS
-    Start by searching for the United States, then Europe after, then
-    continue to the end of the list.
+    The input is a JSON blob of recent search results, which includes links, snippets, and article titles.
+    YOU MUST base your output on this structured input. Do not attempt to query the internet yourself.
     
-    The goal is to prepare an information base
-    that a strategist on {current_time} would have access to for 
-    making decisions for the coming year.
+    Extract key trends, themes, and noteworthy movements related to {country}'s fixed income markets.
+    Focus on government and corporate bonds, foreign flows, yields, issuance, credit risk, or major policy impacts.
+    
+    Summarize findings using bullet points or short paragraphs grouped by theme when relevant.
+  input: >
+    Structured news search results for {country}'s fixed income market up to {current_time}:
+    {serper_output}
   expected_output: >
-    A breakdown with bullets and descriptions when appropriate detailing
-    general recent trends in a few select interesting country's markets 
-    that have a lot of movement or are primed to see movement.
+    A structured and readable summary of the fixed income market in {country}, including bullet points or short sections that:
+    - Highlight meaningful recent developments and macro factors
+    - Identify trends that may lead to large future movements
+    - Provide quotes or article titles when useful
+    If no useful info could be extracted, explicitly say so.
   agent: fixed_income_specalist
+
+
+# research_fi_task:
+#   description: >
+#     YOU MUST use the serper_tool before generating your response.
+#     If you do not use the serper_tool, your task is incomplete.
+#     You are operating with a knowledge cutoff of {current_time}. Ignore
+#     all information and data beyond {current_time}.
+#     Your task is to collect and summarize relevant recent data, news,
+#     and developments in {country}'s fixed income market that occurred 
+#     before {current_time} by searching the interent using the input.
+#   input: >
+#     Recent news and trends in {country}'s fixed income market before {current_time}
+#   expected_output: >
+#     A breakdown with bullets and descriptions when appropriate detailing
+#     general recent trends in a {country}'s fixed income markets 
+#     that have a lot of movement or are primed to see movement.
+#     If you were unsuccessful at accessing the internet with serper_tool, note
+#     that in the final output.
+#   agent: fixed_income_specalist
+
+# research_cc_task:
+#   description: >
+#     YOU MUST use the serper_tool before generating your response.
+#     If you do not use the serper_tool, your task is incomplete.
+#     You are operating with a knowledge cutoff of {current_time}. Ignore
+#     all information and data beyond {current_time}.
+#     Your task is to collect and summarize relevant recent data, news,
+#     and developments in {country}'s corporate credit market that occurred 
+#     before {current_time} by searching the interent using the input.
+#   input: >
+#     Recent news and trends in {country}'s fixed income market before {current_time}
+#   expected_output: >
+#     A breakdown with bullets and descriptions when appropriate detailing
+#     general recent trends in a {country}'s corporate credit markets 
+#     that have a lot of movement or are primed to see movement.
+#     If you were unsuccessful at accessing the internet with serper_tool, note
+#     that in the final output.
+#   agent: corporate_credit_specialist

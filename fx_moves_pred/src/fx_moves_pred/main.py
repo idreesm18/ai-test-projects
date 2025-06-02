@@ -18,12 +18,13 @@ def run():
     Run the crew.
     """
     inputs = {
+        'country': "India",
         'current_time': "Jan. 1, 2022",
         'trade_horizon': "1 Year"
     }
     
     try:
-        FxMovesPred().crew().kickoff(inputs=inputs)
+        FxMovesPred().run_pipeline(inputs=inputs)
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
 
@@ -33,6 +34,7 @@ def train():
     Train the crew for a given number of iterations.
     """
     inputs = {
+        'country': "India",
         'current_time': "Jan. 1, 2022",
         'trade_horizon': "1 Year"
     }
@@ -57,6 +59,7 @@ def test():
     Test the crew execution and returns the results.
     """
     inputs = {
+        'country': "India",
         'current_time': "Jan. 1, 2022",
         'trade_horizon': "1 Year"
     }
