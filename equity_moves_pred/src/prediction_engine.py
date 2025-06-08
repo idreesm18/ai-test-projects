@@ -1,4 +1,5 @@
 import os
+import sys
 import yfinance as yf
 import pandas as pd
 import json
@@ -11,6 +12,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from prompts.prediction_engine_prompts import (
+    generate_prediction_prompt,
+    generate_backtest_analysis_prompt,
+    generate_performance_summary_prompt,
+    format_prediction_output,
+    format_backtest_results
+)
 
 ####################################################
 #               Prediction Data Classes            #
@@ -135,54 +145,6 @@ class PredictiveAnalysisEngine:
             'distance_from_low_pct': (current_price / recent_low - 1) * 100
         }
     
-    def generate_prediction_prompt(self, analysis_input: PredictionInput) -> str:
-        """Creates a structured prompt for the LLM to make predictions"""
-        
-        technical_features = self.calculate_technical_features(analysis_input.price_data)
-        
-        prompt = f"""
-You are a senior equity analyst making a structured prediction for {analysis_input.ticker}.
-
-ANALYSIS WINDOW: {analysis_input.window_start.strftime('%Y-%m-%d')} to {analysis_input.analysis_date.strftime('%Y-%m-%d')}
-
-TECHNICAL ANALYSIS DATA:
-- Current Price: ${technical_features['current_price']:.2f}
-- 1-Week Return: {technical_features['price_change_1w_pct']:.2f}%
-- 1-Month Return: {technical_features['price_change_1m_pct']:.2f}%
-- Annualized Volatility: {technical_features['annualized_volatility']:.1f}%
-- Volume Trend: {technical_features['volume_trend_pct']:.1f}%
-- Distance from Recent High: {technical_features['distance_from_high_pct']:.1f}%
-- Distance from Recent Low: {technical_features['distance_from_low_pct']:.1f}%
-
-FUNDAMENTAL CONTEXT:
-{json.dumps(analysis_input.financial_context, indent=2)}
-
-PREDICTION TASK:
-Provide a structured prediction for the next 2 weeks. You must respond in the following JSON format:
-
-{{
-    "direction": "bullish|bearish|neutral",
-    "confidence": 0.75,
-    "target_price": 150.00,
-    "prediction_horizon": "2w",
-    "reasoning": "Detailed explanation of your analysis and prediction logic",
-    "key_factors": ["factor1", "factor2", "factor3"],
-    "risk_factors": ["risk1", "risk2"]
-}}
-
-ANALYSIS REQUIREMENTS:
-1. Consider both technical patterns and fundamental context
-2. Be specific about what technical signals support your view
-3. Assess momentum, volatility, and volume patterns
-4. Consider sector/market context if relevant
-5. Provide realistic confidence levels (most predictions should be 0.6-0.8)
-6. Include specific price targets based on technical levels
-7. Identify 2-3 key supporting factors and 2 key risks
-
-Provide only the JSON response, no additional text.
-"""
-        return prompt
-    
     def make_prediction(self, ticker: str, analysis_date: datetime = None) -> Prediction:
         """Main method to create a prediction for a given ticker"""
         
@@ -192,8 +154,16 @@ Provide only the JSON response, no additional text.
         # Create analysis input
         analysis_input = self.create_analysis_window(ticker, analysis_date)
         
-        # Generate prediction using LLM
-        prompt = self.generate_prediction_prompt(analysis_input)
+        # Calculate technical features
+        technical_features = self.calculate_technical_features(analysis_input.price_data)
+        
+        # Generate prediction using IMPORTED prompt function
+        prompt = generate_prediction_prompt(
+            ticker=ticker,
+            analysis_date=analysis_date,
+            technical_features=technical_features,
+            financial_context=analysis_input.financial_context
+        )
         
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -201,12 +171,33 @@ Provide only the JSON response, no additional text.
             temperature=0.7
         )
         
-        try:
-            prediction_data = json.loads(response.choices[0].message.content)
-        except json.JSONDecodeError:
-            raise ValueError("LLM did not return valid JSON prediction")
+        # ROBUST JSON PARSING (fixes your NVDA issue)
+        raw_response = response.choices[0].message.content
         
-        # Create prediction object
+        try:
+            # First try direct JSON parsing
+            prediction_data = json.loads(raw_response)
+        except json.JSONDecodeError:
+            # Extract JSON from markdown code blocks
+            import re
+            json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', raw_response, re.DOTALL)
+            if json_match:
+                try:
+                    prediction_data = json.loads(json_match.group(1))
+                except json.JSONDecodeError:
+                    raise ValueError("Could not parse extracted JSON")
+            else:
+                # Last resort: find any JSON-like content
+                json_match = re.search(r'(\{.*?\})', raw_response, re.DOTALL)
+                if json_match:
+                    try:
+                        prediction_data = json.loads(json_match.group(1))
+                    except json.JSONDecodeError:
+                        raise ValueError(f"No valid JSON found: {raw_response[:200]}...")
+                else:
+                    raise ValueError(f"No JSON content found: {raw_response[:200]}...")
+        
+        # Rest of the method stays the same...
         prediction_id = f"{ticker}_{analysis_date.strftime('%Y%m%d')}_{datetime.now().strftime('%H%M%S')}"
         
         prediction = Prediction(
@@ -222,10 +213,12 @@ Provide only the JSON response, no additional text.
             risk_factors=prediction_data['risk_factors']
         )
         
-        # Store prediction
         self.predictions_db.append(prediction)
-        
         return prediction
+    
+    def print_prediction_results(self, prediction: Prediction):
+        """Print formatted prediction results"""
+        print(format_prediction_output(prediction))
     
     def backtest_prediction(self, prediction: Prediction, 
                           outcome_date: datetime = None) -> PredictionOutcome:
@@ -278,6 +271,36 @@ Provide only the JSON response, no additional text.
         self.outcomes_db.append(outcome)
         return outcome
     
+    def analyze_prediction_performance(self, prediction: Prediction, outcome: PredictionOutcome):
+        """Generate LLM analysis of prediction performance"""
+        
+        prediction_data = {
+            'ticker': prediction.ticker,
+            'direction': prediction.direction,
+            'confidence': prediction.confidence,
+            'target_price': prediction.target_price,
+            'key_factors': prediction.key_factors,
+            'risk_factors': prediction.risk_factors,
+            'reasoning': prediction.reasoning
+        }
+        
+        outcome_data = {
+            'actual_direction': outcome.actual_direction,
+            'actual_return': outcome.actual_return,
+            'target_hit': outcome.target_hit,
+            'days_to_outcome': outcome.days_to_outcome
+        }
+        
+        prompt = generate_backtest_analysis_prompt(prediction_data, outcome_data)
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
+        )
+        
+        return response.choices[0].message.content
+    
     def get_performance_metrics(self) -> Dict:
         """Calculate performance metrics for all predictions"""
         
@@ -325,29 +348,26 @@ Provide only the JSON response, no additional text.
 ####################################################
 
 def demo_prediction_system():
-    """Demonstrate the prediction system"""
+    """Demonstrate the prediction system with better formatting"""
     
     engine = PredictiveAnalysisEngine()
     
-    # Make a prediction for AAPL
-    print("Making prediction for AAPL...")
+    # Get ticker from user
+    ticker = input("Enter ticker symbol (e.g., AAPL): ").upper().strip()
+    if not ticker:
+        ticker = "AAPL"
+    
+    print(f"\n⏳ Making prediction for {ticker}...")
     try:
-        prediction = engine.make_prediction("AAPL")
+        prediction = engine.make_prediction(ticker)
         
-        print(f"\nPREDICTION RESULTS:")
-        print(f"Ticker: {prediction.ticker}")
-        print(f"Direction: {prediction.direction}")
-        print(f"Confidence: {prediction.confidence}")
-        print(f"Target Price: ${prediction.target_price}")
-        print(f"Key Factors: {', '.join(prediction.key_factors)}")
-        print(f"Risk Factors: {', '.join(prediction.risk_factors)}")
-        print(f"\nReasoning: {prediction.reasoning}")
+        # Use the improved formatting
+        print(format_prediction_output(prediction))
         
-        # For demo, you could backtest against a past date
-        # outcome = engine.backtest_prediction(prediction, datetime.now() + timedelta(days=14))
+        # Optional: Show backtest capability
+        print("\n💡 Tip: Run backtest after 2 weeks to evaluate performance!")
         
     except Exception as e:
-        print(f"Error making prediction: {e}")
-
-if __name__ == "__main__":
-    demo_prediction_system()
+        print(f"❌ Error making prediction: {e}")
+        import traceback
+        traceback.print_exc()  # For debugging
