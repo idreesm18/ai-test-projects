@@ -291,6 +291,7 @@ def format_prediction_output(prediction) -> str:
 
 📈 Direction: {prediction.direction.upper()}
 🎲 Confidence: {prediction.confidence:.1%}
+💲 Current Price: ${prediction.current_price:.2f}
 💰 Target Price: ${prediction.target_price:.2f}
 ⏰ Horizon: {prediction.prediction_horizon}
 
