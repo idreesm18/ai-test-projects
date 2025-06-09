@@ -200,17 +200,21 @@ def test_enhanced_backtest():
     
     engine = PredictiveAnalysisEngine()
     
-    # Use a date from 3 weeks ago
-    analysis_date = datetime.now() - timedelta(days=21)
+    # Use a date from 6 months ago
+    analysis_date = datetime.now() - timedelta(days=180)
     ticker = input("Enter ticker for enhanced backtest (e.g., MSFT): ").upper().strip()
     if not ticker:
         ticker = "MSFT"
+
+    prediction_horizon = input("Enter prediction horizon (e.g., 2w, 1w, 10d): ").strip()
+    if not prediction_horizon:
+        prediction_horizon = "2w"
     
     try:
         print(f"⏳ Making historical prediction for {ticker} on {analysis_date.strftime('%Y-%m-%d')}...")
         print("🔍 Enhanced validation and analysis in progress...")
         
-        prediction = engine.make_prediction(ticker, analysis_date)
+        prediction = engine.make_prediction(ticker, analysis_date, prediction_horizon)
         engine.print_prediction_results(prediction)
         
         print_separator()

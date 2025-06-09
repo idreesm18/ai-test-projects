@@ -39,7 +39,7 @@ PREDICTION STANDARDS:
 ####################################################
 
 def generate_prediction_prompt(ticker: str, analysis_date: datetime, technical_features: Dict[str, Any], 
-                             financial_context: Dict[str, Any]) -> str:
+                             financial_context: Dict[str, Any], prediction_horizon: str = "2w") -> str:
     """
     Generate the main prediction prompt using structured data
     This replaces the hardcoded prompt in the engine
@@ -79,7 +79,7 @@ Provide a structured 2-week prediction. You must respond ONLY with valid JSON in
     "direction": "bullish|bearish|neutral",
     "confidence": 0.75,
     "target_price": 150.00,
-    "prediction_horizon": "2w",
+    "prediction_horizon": f"{prediction_horizon}",
     "reasoning": "Detailed multi-factor analysis explaining your prediction logic, technical signals, and fundamental considerations",
     "key_factors": ["factor1", "factor2", "factor3"],
     "risk_factors": ["risk1", "risk2"],

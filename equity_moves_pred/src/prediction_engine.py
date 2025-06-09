@@ -370,7 +370,7 @@ class PredictiveAnalysisEngine:
             'momentum_score': (price_change_1w + price_change_1m) / 2  # Simple momentum
         }
     
-    def make_prediction(self, ticker: str, analysis_date: datetime = None) -> Prediction:
+    def make_prediction(self, ticker: str, analysis_date: datetime = None, prediction_horizon: str = "2w") -> Prediction:
         """Main method to create a prediction - ENHANCED with quality scoring"""
         
         if analysis_date is None:
@@ -394,7 +394,8 @@ class PredictiveAnalysisEngine:
                 ticker=ticker,
                 analysis_date=analysis_date,
                 technical_features=technical_features,
-                financial_context=analysis_input.financial_context
+                financial_context=analysis_input.financial_context,
+                prediction_horizon=prediction_horizon
             )
             
             response = client.chat.completions.create(
