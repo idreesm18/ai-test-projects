@@ -25,6 +25,12 @@ from prompts.prediction_engine_prompts import (
 )
 
 ####################################################
+#                     Utils                        #
+####################################################
+
+
+
+####################################################
 #            NEW: Data Quality Classes             #
 ####################################################
 
@@ -141,18 +147,50 @@ class Prediction:
     risk_factors: List[str]
     data_quality_score: float  # NEW: 0-1 score for data reliability
 
+
 @dataclass
 class PredictionOutcome:
-    """Actual outcome vs prediction for backtesting - ENHANCED"""
+    """Actual outcome vs prediction for backtesting - ENHANCED with prediction details"""
     prediction_id: str
+    
+    # Prediction details (for easy comparison)
+    predicted_direction: str
+    predicted_confidence: float
+    predicted_target_price: Optional[float]
+    predicted_move_pct: Optional[float]  # Expected % move if target was set
+    
+    # Actual outcome details
     actual_direction: str
     actual_return: float
     target_hit: bool
+    
+    # Timing and additional metrics
     days_to_outcome: int
     outcome_date: datetime
-    max_favorable_return: float  # NEW: Best case during period
-    max_adverse_return: float    # NEW: Worst case during period
-    volatility_during_period: float  # NEW: Realized vol
+    max_favorable_return: float  # Best case during period
+    max_adverse_return: float    # Worst case during period
+    volatility_during_period: float  # Realized vol
+    
+    # Comparison metrics
+    direction_correct: bool
+    confidence_calibration: float  # How far off confidence was from reality
+    
+    def __str__(self) -> str:
+        """Easy-to-read string representation"""
+        outcome_symbol = "✅" if self.direction_correct else "❌"
+        
+        predicted_move_str = f" (Target: ${self.predicted_target_price:.2f})" if self.predicted_target_price else ""
+        actual_move_str = f"{self.actual_return:+.1f}%"
+        
+        return f"""
+{outcome_symbol} PREDICTION OUTCOME ({self.prediction_id})
+   Predicted: {self.predicted_direction.upper()} @ {self.predicted_confidence:.0%} confidence{predicted_move_str}
+   Actual:    {self.actual_direction.upper()} with {actual_move_str} return
+   Target Hit: {'Yes' if self.target_hit else 'No'}
+   Duration: {self.days_to_outcome} trading days
+   Max Favorable: {self.max_favorable_return:+.1f}%
+   Max Adverse: {self.max_adverse_return:+.1f}%
+        """.strip()
 
 ####################################################
 #           NEW: Advanced Metrics Calculator       #
@@ -257,6 +295,59 @@ class PredictiveAnalysisEngine:
         self.predictions_db = []
         self.outcomes_db = []
         self.metrics_calculator = AdvancedMetricsCalculator()  # NEW
+
+    def _parse_prediction_horizon_to_date(self, analysis_date: datetime, horizon: str) -> datetime:
+        """
+        Parse prediction horizon string and calculate outcome date
+        
+        Args:
+            analysis_date: The date the prediction was made
+            horizon: Horizon string like "2w", "30d", "3m", "1y"
+        
+        Returns:
+            datetime: The calculated outcome date
+            
+        Examples:
+            "2w" -> analysis_date + 14 days
+            "30d" -> analysis_date + 30 days  
+            "3m" -> analysis_date + ~90 days
+            "1y" -> analysis_date + 365 days
+        """
+        import re
+        
+        # Clean the horizon string
+        horizon = horizon.strip().lower()
+        
+        # Parse the horizon using regex
+        match = re.match(r'(\d+)\s*([dwmy])', horizon)
+        
+        if not match:
+            # Fallback: try to extract just numbers and assume days
+            number_match = re.search(r'(\d+)', horizon)
+            if number_match:
+                days = int(number_match.group(1))
+                print(f"⚠️  Could not parse horizon '{horizon}', assuming {days} days")
+                return analysis_date + timedelta(days=days)
+            else:
+                # Ultimate fallback
+                print(f"⚠️  Could not parse horizon '{horizon}', defaulting to 14 days")
+                return analysis_date + timedelta(days=14)
+        
+        number = int(match.group(1))
+        unit = match.group(2)
+        
+        if unit == 'd':  # days
+            return analysis_date + timedelta(days=number)
+        elif unit == 'w':  # weeks
+            return analysis_date + timedelta(weeks=number)
+        elif unit == 'm':  # months (approximate)
+            return analysis_date + timedelta(days=number * 30)
+        elif unit == 'y':  # years (approximate)
+            return analysis_date + timedelta(days=number * 365)
+        else:
+            # Shouldn't reach here due to regex, but just in case
+            print(f"⚠️  Unknown unit '{unit}' in horizon '{horizon}', defaulting to 14 days")
+            return analysis_date + timedelta(days=14)
         
     def create_analysis_window(self, ticker: str, analysis_date: datetime, 
                              window_days: int = 30) -> PredictionInput:
@@ -429,7 +520,8 @@ class PredictiveAnalysisEngine:
             
             # Create prediction with quality score and current price
             prediction_id = f"{ticker}_{analysis_date.strftime('%Y%m%d')}_{datetime.now().strftime('%H%M%S')}"
-            
+            print(raw_response)
+
             prediction = Prediction(
                 ticker=ticker,
                 prediction_id=prediction_id,
@@ -471,16 +563,30 @@ class PredictiveAnalysisEngine:
         return max(0.0, min(1.0, score))
     
     def backtest_prediction(self, prediction: Prediction, 
-                          outcome_date: datetime = None) -> PredictionOutcome:
-        """Backtest a prediction - ENHANCED with additional metrics"""
+                            prediction_horizon: str = None,
+                            outcome_date: datetime = None) -> PredictionOutcome:
+        """
+        Backtest a prediction - ENHANCED with prediction horizon parsing
+        
+        Args:
+            prediction: The prediction to backtest
+            prediction_horizon: Override horizon (e.g., "2w", "30d", "3m", "1y") 
+                            If None, uses prediction.prediction_horizon
+            outcome_date: Explicit outcome date (overrides horizon calculation)
+        """
+        
+        # Use provided horizon or fall back to prediction's horizon
+        horizon = prediction_horizon or prediction.prediction_horizon
         
         if outcome_date is None:
-            outcome_date = prediction.analysis_date + timedelta(days=14)
+            outcome_date = self._parse_prediction_horizon_to_date(
+                prediction.analysis_date, horizon
+            )
         
         # Fetch actual price data
         stock = yf.Ticker(prediction.ticker)
         outcome_data = stock.history(
-            start=prediction.analysis_date, 
+            start=prediction.analysis_date + timedelta(days=1),  # Day after prediction
             end=outcome_date + timedelta(days=1)
         )
         
@@ -492,7 +598,7 @@ class PredictiveAnalysisEngine:
         end_price = outcome_data['Close'].iloc[-1]
         actual_return = (end_price / start_price - 1) * 100
         
-        # NEW: Enhanced outcome analysis
+        # Enhanced outcome analysis
         daily_returns = outcome_data['Close'].pct_change().dropna()
         max_favorable = daily_returns.max() * 100 if len(daily_returns) > 0 else 0
         max_adverse = daily_returns.min() * 100 if len(daily_returns) > 0 else 0
@@ -514,16 +620,41 @@ class PredictiveAnalysisEngine:
             elif prediction.direction == "bearish":
                 target_hit = outcome_data['Low'].min() <= prediction.target_price
         
+        # Calculate predicted move percentage if target was set
+        predicted_move_pct = None
+        if prediction.target_price and prediction.current_price:
+            predicted_move_pct = (prediction.target_price / prediction.current_price - 1) * 100
+        
+        # Direction correctness
+        direction_correct = prediction.direction == actual_direction
+        
+        # Confidence calibration (positive = overconfident, negative = underconfident)
+        confidence_calibration = prediction.confidence - (1.0 if direction_correct else 0.0)
+        
         outcome = PredictionOutcome(
             prediction_id=prediction.prediction_id,
+            
+            # Prediction details
+            predicted_direction=prediction.direction,
+            predicted_confidence=prediction.confidence,
+            predicted_target_price=prediction.target_price,
+            predicted_move_pct=predicted_move_pct,
+            
+            # Actual outcome
             actual_direction=actual_direction,
             actual_return=actual_return,
             target_hit=target_hit,
-            days_to_outcome=len(outcome_data) - 1,
+            
+            # Timing and metrics
+            days_to_outcome=len(outcome_data),
             outcome_date=outcome_date,
-            max_favorable_return=max_favorable,  # NEW
-            max_adverse_return=max_adverse,      # NEW
-            volatility_during_period=period_volatility  # NEW
+            max_favorable_return=max_favorable,
+            max_adverse_return=max_adverse,
+            volatility_during_period=period_volatility,
+            
+            # Comparison
+            direction_correct=direction_correct,
+            confidence_calibration=confidence_calibration
         )
         
         self.outcomes_db.append(outcome)

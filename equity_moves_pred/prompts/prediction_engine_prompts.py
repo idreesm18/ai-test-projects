@@ -73,13 +73,13 @@ Based on the price action and technical indicators:
 4. Consider volatility regime and its implications
 
 PREDICTION TASK:
-Provide a structured 2-week prediction. You must respond ONLY with valid JSON in this exact format:
+Provide a structured {prediction_horizon} prediction. You must respond ONLY with valid JSON in this exact format, ensuring that values specified to be numbers are numbers and explicitly setting "prediction_horizon" to "{prediction_horizon}".:
 
 {{
     "direction": "bullish|bearish|neutral",
-    "confidence": 0.75,
-    "target_price": 150.00,
-    "prediction_horizon": f"{prediction_horizon}",
+    "confidence": "confidence_level (number)",
+    "target_price": "target_price (number)",
+    "prediction_horizon": "{prediction_horizon}",
     "reasoning": "Detailed multi-factor analysis explaining your prediction logic, technical signals, and fundamental considerations",
     "key_factors": ["factor1", "factor2", "factor3"],
     "risk_factors": ["risk1", "risk2"],

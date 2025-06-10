@@ -15,23 +15,68 @@ def print_separator():
     print("\n" + "="*60 + "\n")
 
 def print_outcome_results(prediction, outcome):
-    """Pretty print enhanced backtest results"""
+    """Pretty print enhanced backtest results with clear prediction vs actual comparison"""
+    
+    # Calculate predicted movement if target price exists
+    predicted_move = None
+    if prediction.target_price and prediction.current_price:
+        predicted_move = (prediction.target_price / prediction.current_price - 1) * 100
+    
     print(f"📈 ENHANCED BACKTEST RESULTS for {prediction.ticker}")
     print(f"   Prediction ID: {outcome.prediction_id}")
-    print(f"   Predicted: {prediction.direction.upper()} (confidence: {prediction.confidence:.1%})")
-    print(f"   Actual: {outcome.actual_direction.upper()}")
-    print(f"   Actual Return: {outcome.actual_return:.2f}%")
-    print(f"   Target Hit: {'✅ YES' if outcome.target_hit else '❌ NO'}")
+    print(f"   Analysis Date: {prediction.analysis_date.strftime('%Y-%m-%d')}")
     print(f"   Days Elapsed: {outcome.days_to_outcome}")
     
-    # NEW: Enhanced outcome metrics
-    print(f"   Max Favorable Move: {outcome.max_favorable_return:.2f}%")
-    print(f"   Max Adverse Move: {outcome.max_adverse_return:.2f}%")
-    print(f"   Period Volatility: {outcome.volatility_during_period:.1f}%")
+    # Clear Predicted vs Actual comparison
+    print(f"\n🎯 PREDICTION vs REALITY:")
     
-    # Determine accuracy
+    # Direction comparison
+    direction_match = "✅" if prediction.direction == outcome.actual_direction else "❌"
+    print(f"   Direction:  {prediction.direction.upper()} → {outcome.actual_direction.upper()} {direction_match}")
+    
+    # Movement comparison - show both % and $ for clarity
+    if predicted_move is not None:
+        # Calculate actual target price that was reached
+        actual_target_price = prediction.current_price * (1 + outcome.actual_return / 100)
+        
+        # Show percentage comparison
+        move_comparison_pct = f"{predicted_move:+.1f}% → {outcome.actual_return:+.1f}%"
+        
+        # Show dollar comparison
+        move_comparison_dollar = f"${prediction.target_price:.2f} → ${actual_target_price:.2f}"
+        
+        # Calculate how close we got
+        direction_correct = (predicted_move > 0 and outcome.actual_return > 0) or (predicted_move < 0 and outcome.actual_return < 0)
+        pct_difference = abs(predicted_move - outcome.actual_return)
+        
+        if direction_correct and pct_difference < abs(predicted_move) * 0.3:  # Within 30%
+            move_success = "✅"
+        elif direction_correct:
+            move_success = "⚠️"
+        else:
+            move_success = "❌"
+        
+        print(f"   Movement:   {move_comparison_pct} {move_success}")
+        print(f"   Price:      {move_comparison_dollar}")
+        print(f"   Difference: {pct_difference:.1f} percentage points off")
+    else:
+        print(f"   Movement:   No target → {outcome.actual_return:+.1f}%")
+    
+    # Confidence and target info
+    print(f"   Confidence: {prediction.confidence:.1%}")
+    if prediction.target_price:
+        print(f"   Target:     ${prediction.target_price:.2f} ({'✅ HIT' if outcome.target_hit else '❌ MISSED'})")
+    
+    # Risk metrics
+    print(f"\n📊 RISK METRICS:")
+    print(f"   Max Upside:     {outcome.max_favorable_return:+.2f}%")
+    print(f"   Max Downside:   {outcome.max_adverse_return:+.2f}%")
+    print(f"   Volatility:     {outcome.volatility_during_period:.1f}%")
+    
+    # Overall assessment
     direction_correct = prediction.direction == outcome.actual_direction
-    print(f"   Direction Accuracy: {'✅ CORRECT' if direction_correct else '❌ WRONG'}")
+    overall_success = "🎉 SUCCESS" if direction_correct else "⚠️ MISS"
+    print(f"\n🏆 OVERALL: {overall_success}")
 
 def test_data_quality_validation():
     """NEW: Test data quality validation system"""
@@ -220,9 +265,8 @@ def test_enhanced_backtest():
         print_separator()
         print("⏳ Running enhanced backtest...")
         
-        # Backtest 2 weeks later
-        outcome_date = analysis_date + timedelta(days=14)
-        outcome = engine.backtest_prediction(prediction, outcome_date)
+        # Backtest to the prediction horizon
+        outcome = engine.backtest_prediction(prediction, prediction_horizon=prediction_horizon)
         print_outcome_results(prediction, outcome)
         
         return engine
